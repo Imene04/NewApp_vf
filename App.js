@@ -3,7 +3,7 @@ import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator }
 import axios from 'axios';
 import dayjs from 'dayjs';
 import 'dayjs/locale/fr';
-import Icon from 'react-native-vector-icons/Ionicons'; // Importer les icônes
+import Icon from 'react-native-vector-icons/Ionicons';
 
 dayjs.locale('fr');
 
@@ -11,6 +11,7 @@ const App = () => {
   const [currentDay, setCurrentDay] = useState(dayjs());
   const [slots, setSlots] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [hoveredSlot, setHoveredSlot] = useState(null); // État pour gérer l'effet de survol
 
   const fetchSlots = async (startDate, endDate) => {
     setLoading(true);
@@ -41,9 +42,9 @@ const App = () => {
   };
 
   useEffect(() => {
-    const startDate = currentDay.startOf('day');
-    const endDate = currentDay.add(6, 'day').endOf('day');
-    fetchSlots(startDate.format('YYYY-MM-DD'), endDate.format('YYYY-MM-DD'));
+    const startDate = currentDay.startOf('week').format('YYYY-MM-DD');
+    const endDate = currentDay.endOf('week').format('YYYY-MM-DD');
+    fetchSlots(startDate, endDate);
   }, [currentDay]);
 
   const handlePreviousWeek = () => {
@@ -59,29 +60,32 @@ const App = () => {
   const getDaySlots = (day) => {
     const daySlots = slots.filter(slot => dayjs(slot.start).isSame(day, 'day'));
 
-    // Create a list of all slots from 8:30 to 17:00 with gaps
     const allSlots = [];
-    let currentTime = day.startOf('day').hour(8).minute(30);
-    const endTime = day.startOf('day').hour(17).minute(0);
+    let currentTime = day.startOf('day').hour(8).minute(0);
+    const endTime = day.startOf('day').hour(18).minute(0);
 
-    // Add slots with a fixed number to display
-    const numberOfSlotsToShow = 10; // Limiter le nombre de créneaux affichés
-    let slotCount = 0;
-
-    while (currentTime.isBefore(endTime) && slotCount < numberOfSlotsToShow) {
+    const slotDuration = 30;
+    while (currentTime.isBefore(endTime)) {
       allSlots.push({
         start: currentTime,
-        available: !daySlots.some(slot => dayjs(slot.start).isSame(currentTime)),
+        available: daySlots.some(slot => dayjs(slot.start).isSame(currentTime)),
       });
-      currentTime = currentTime.add(30, 'minute'); // move to next slot
-      slotCount++;
+      currentTime = currentTime.add(slotDuration, 'minute');
     }
 
     return allSlots;
   };
 
-  const renderSlot = ({ item }) => (
-    <TouchableOpacity style={item.available ? styles.slot : styles.slotEmpty}>
+  const renderSlot = ({ item, index }) => (
+    <TouchableOpacity
+      style={[
+        styles.slot,
+        !item.available && styles.slotEmpty,
+        hoveredSlot === index && styles.slotHovered // Appliquer le style de survol
+      ]}
+      onPressIn={() => setHoveredSlot(index)} // Activer l'effet de survol
+      onPressOut={() => setHoveredSlot(null)} // Désactiver l'effet de survol
+    >
       <Text style={styles.slotText}>
         {item.available ? `${dayjs(item.start).format('HH:mm')}` : '-'}
       </Text>
@@ -95,7 +99,7 @@ const App = () => {
       <View style={styles.dayColumn}>
         <View style={styles.dayContainer}>
           <Text style={styles.day}>{day.format('dddd')}</Text>
-          <Text style={styles.date}>{day.format('DD MMM YYYY')}</Text>
+          <Text style={styles.date}>{day.format('DD MMM')}</Text>
         </View>
         <FlatList
           data={daySlots}
@@ -106,30 +110,24 @@ const App = () => {
     );
   };
 
-  const days = Array.from({ length: 7 }, (_, i) => currentDay.add(i, 'day'));
-
-  const today = dayjs().startOf('day');
-  const isPreviousDisabled = currentDay.isSame(today, 'day') || currentDay.isBefore(today, 'day');
+  const days = Array.from({ length: 7 }, (_, i) => currentDay.startOf('week').add(i, 'day'));
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={handlePreviousWeek} disabled={isPreviousDisabled} style={isPreviousDisabled ? styles.disabledArrow : styles.arrow}>
-          <Icon name="arrow-back" size={30} color={isPreviousDisabled ? 'gray' : 'black'} />
+        <TouchableOpacity onPress={handlePreviousWeek} style={styles.arrow}>
+          <Icon name="arrow-back" size={30} color="#3498DB" />
         </TouchableOpacity>
         <TouchableOpacity onPress={handleNextWeek} style={styles.arrow}>
-          <Icon name="arrow-forward" size={30} color="black" />
+          <Icon name="arrow-forward" size={30} color="#3498DB" />
         </TouchableOpacity>
       </View>
       {loading ? (
-        <ActivityIndicator size="large" color="#0000ff" />
+        <ActivityIndicator size="large" color="#3498DB" />
       ) : (
-        <FlatList
-          data={days}
-          renderItem={({ item }) => renderDay(item)}
-          keyExtractor={(item) => item.format('YYYY-MM-DD')}
-          horizontal
-        />
+        <View style={styles.calendar}>
+          {days.map(day => renderDay(day))}
+        </View>
       )}
     </View>
   );
@@ -138,57 +136,72 @@ const App = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    alignItems: 'center', // Centrer horizontalement
-    justifyContent: 'center', // Centrer verticalement
+    backgroundColor: '#F8F9FA',
+    padding: 15,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20, // Ajouté un espace en bas pour séparer du calendrier
-    width: '100%', // S'assurer que le header prend toute la largeur disponible
-  },
-  dayColumn: {
-    marginHorizontal: 10,
-    alignItems: 'center', // Centrer horizontalement le jour et la date
-  },
-  dayContainer: {
-    backgroundColor: '#e0e0e0', // Couleur de fond plus claire
-    borderRadius: 5,
-    padding: 10,
-    alignItems: 'center',
-    marginBottom: 10,
-  },
-  day: {
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  date: {
-    fontSize: 14,
-  },
-  slot: {
-    backgroundColor: '#d3d3d3', // Couleur des slots en gris clair
-    padding: 10,
-    marginVertical: 5,
-    width: '100%', // Assurer que les slots prennent toute la largeur disponible
-  },
-  slotEmpty: {
-    backgroundColor: 'white', // Couleur de fond blanche pour les slots vides
-    padding: 10,
-    marginVertical: 5,
-    width: '100%', // Assurer que les slots prennent toute la largeur disponible
-  },
-  slotText: {
-    color: 'black',
-    textAlign: 'center',
+    marginBottom: 20,
   },
   arrow: {
     padding: 10,
   },
-  disabledArrow: {
+  calendar: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  dayColumn: {
+    flex: 1,
+    marginHorizontal: 5,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    shadowColor: '#BDC3C7',
+    shadowOffset: { width: 0, height: 5 },
+    shadowOpacity: 0.2,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  dayContainer: {
+    alignItems: 'center',
+    marginVertical: 10,
+    paddingVertical: 5,
+    borderBottomWidth: 1,
+    borderBottomColor: '#BDC3C7',
+  },
+  day: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    color: '#2C3E50',
+  },
+  date: {
+    fontSize: 12,
+    color: '#7F8C8D',
+  },
+  slot: {
+    backgroundColor: '#3498DB',
     padding: 10,
-    opacity: 0.5,
+    marginVertical: 3,
+    marginHorizontal: 5,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#BDC3C7',
+    shadowOffset: { width: 0, height: 3 },
+    shadowOpacity: 0.3,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  slotEmpty: {
+    backgroundColor: '#BDC3C7',
+  },
+  slotHovered: {
+    backgroundColor: '#2C3E50',
+    color: '#FFFFFF',
+  },
+  slotText: {
+    color: '#FFFFFF',
+    fontSize: 12,
   },
 });
 
