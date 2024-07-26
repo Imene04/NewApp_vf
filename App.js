@@ -56,13 +56,57 @@ const App = () => {
     setCurrentDay(newCurrentDay);
   };
 
+  const getDaySlots = (day) => {
+    const daySlots = slots.filter(slot => dayjs(slot.start).isSame(day, 'day'));
+
+    // Créer une liste de tous les créneaux horaires de 8:30 à 17:00 avec des espaces
+    const allSlots = [];
+    let currentTime = day.startOf('day').hour(8).minute(30);
+    const endTime = day.startOf('day').hour(17).minute(0);
+
+    while (currentTime.isBefore(endTime)) {
+      const nextTime = currentTime.add(30, 'minute');
+      allSlots.push({
+        start: currentTime,
+        end: nextTime,
+        available: daySlots.some(slot => dayjs(slot.start).isSame(currentTime) && dayjs(slot.end).isSame(nextTime)),
+      });
+      currentTime = nextTime;
+    }
+
+    // Limiter le nombre de créneaux horaires vides affichés
+    const availableSlots = allSlots.filter(slot => slot.available);
+    const emptySlots = allSlots.filter(slot => !slot.available).slice(0, Math.max(availableSlots.length / 2, 1));
+
+    return [...availableSlots, ...emptySlots];
+  };
+
   const renderSlot = ({ item }) => (
-    <TouchableOpacity style={styles.slot}>
-      <Text style={styles.slotText}>{`${dayjs(item.start).format('HH:mm')} - ${dayjs(item.end).format('HH:mm')}`}</Text>
+    <TouchableOpacity style={[styles.slot, !item.available && styles.emptySlot]}>
+      <Text style={styles.slotText}>
+        {item.available ? `${dayjs(item.start).format('HH:mm')} - ${dayjs(item.end).format('HH:mm')}` : '-'}
+      </Text>
     </TouchableOpacity>
   );
 
-  // Obtenir les dates de la semaine actuelle
+  const renderDay = (day) => {
+    const daySlots = getDaySlots(day);
+
+    return (
+      <View style={styles.dayColumn}>
+        <View style={styles.dayContainer}>
+          <Text style={styles.day}>{day.format('dddd')}</Text>
+          <Text style={styles.date}>{day.format('DD MMM YYYY')}</Text>
+        </View>
+        <FlatList
+          data={daySlots}
+          renderItem={renderSlot}
+          keyExtractor={(item, index) => index.toString()}
+        />
+      </View>
+    );
+  };
+
   const days = Array.from({ length: 7 }, (_, i) => currentDay.add(i, 'day'));
 
   const today = dayjs().startOf('day');
@@ -83,20 +127,7 @@ const App = () => {
       ) : (
         <FlatList
           data={days}
-          renderItem={({ item }) => (
-            <View style={styles.dayColumn}>
-              <View style={styles.dayContainer}>
-                <Text style={styles.day}>{item.format('dddd')}</Text>
-                <Text style={styles.date}>{item.format('DD MMM YYYY')}</Text>
-              </View>
-              <FlatList
-                data={slots.filter(slot => dayjs(slot.start).isSame(item, 'day')).sort((a, b) => dayjs(a.start).isBefore(dayjs(b.start)) ? -1 : 1)}
-                renderItem={renderSlot}
-                keyExtractor={(item, index) => index.toString()}
-                contentContainerStyle={styles.slotsList}
-              />
-            </View>
-          )}
+          renderItem={({ item }) => renderDay(item)}
           keyExtractor={(item) => item.format('YYYY-MM-DD')}
           horizontal
         />
@@ -124,7 +155,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', // Centrer horizontalement le jour et la date
   },
   dayContainer: {
-    backgroundColor: '#e0e0e0', // Gris clair pour le cadre jour/date
+    backgroundColor: '#e0e0e0', // Couleur de fond plus claire
     borderRadius: 5,
     padding: 10,
     alignItems: 'center',
@@ -138,13 +169,17 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   slot: {
-    backgroundColor: '#f0f0f0', // Gris encore plus clair pour les slots
+    backgroundColor: '#d3d3d3', // Couleur des slots en gris clair
     padding: 10,
     marginVertical: 5,
-    borderRadius: 5, // Ajout d'arrondi pour les coins
+    width: '100%', // Assurer que les slots prennent toute la largeur disponible
+  },
+  emptySlot: {
+    backgroundColor: '#ffffff', // Arrière-plan blanc pour les créneaux horaires vides
   },
   slotText: {
     color: 'black',
+    textAlign: 'center',
   },
   arrow: {
     padding: 10,
@@ -152,9 +187,6 @@ const styles = StyleSheet.create({
   disabledArrow: {
     padding: 10,
     opacity: 0.5,
-  },
-  slotsList: {
-    width: 120,
   },
 });
 
