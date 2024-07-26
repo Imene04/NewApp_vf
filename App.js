@@ -1,4 +1,4 @@
-// Ajout du style et du design du composant calendrier
+// Ajout des effets de hover et élargissement des slots
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
@@ -73,7 +73,7 @@ const App = () => {
   };
 
   const renderSlot = ({ item }) => (
-    <TouchableOpacity style={styles.slot}>
+    <TouchableOpacity style={[styles.slot, item.available && styles.slotAvailable]}>
       <Text style={styles.slotText}>
         {item.available ? dayjs(item.start).format('HH:mm') : '-'}
       </Text>
@@ -165,6 +165,9 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     alignItems: 'center',
     borderRadius: 5,
+  },
+  slotAvailable: {
+    backgroundColor: '#d0ffd0',
   },
   slotText: {
     fontSize: 14,
