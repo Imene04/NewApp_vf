@@ -1,4 +1,3 @@
-// Ajout des effets de hover et élargissement des slots
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import axios from 'axios';
@@ -87,7 +86,7 @@ const App = () => {
       <View style={styles.dayColumn}>
         <View style={styles.dayContainer}>
           <Text style={styles.day}>{day.format('dddd')}</Text>
-          <Text style={styles.date}>{day.format('DD MMM YYYY')}</Text>
+          <Text style={styles.date}>{day.format('DD MMM')}</Text> {/* Modifié ici */}
         </View>
         <FlatList
           data={daySlots}
@@ -150,6 +149,14 @@ const styles = StyleSheet.create({
   dayContainer: {
     alignItems: 'center',
     marginBottom: 10,
+    backgroundColor: '#e0e0e0', // Couleur de fond
+    padding: 10, // Ajout de padding pour l'espacement interne
+    borderRadius: 10, // Bordures arrondies
+    shadowColor: '#000', // Couleur de l'ombre
+    shadowOffset: { width: 0, height: 2 }, // Déplacement de l'ombre
+    shadowOpacity: 0.8, // Opacité de l'ombre
+    shadowRadius: 3, // Rayon de l'ombre
+    elevation: 5, // Ombre sur Android
   },
   day: {
     fontSize: 16,
