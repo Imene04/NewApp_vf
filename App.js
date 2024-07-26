@@ -73,9 +73,6 @@ const App = () => {
         <TouchableOpacity onPress={handlePreviousWeek} disabled={isPreviousDisabled} style={isPreviousDisabled ? styles.disabledArrow : styles.arrow}>
           <Icon name="arrow-back" size={30} color={isPreviousDisabled ? 'gray' : 'black'} />
         </TouchableOpacity>
-        <Text style={styles.title}>
-          {currentDay.format('DD MMM YYYY')} - {currentDay.add(6, 'day').format('DD MMM YYYY')}
-        </Text>
         <TouchableOpacity onPress={handleNextWeek} style={styles.arrow}>
           <Icon name="arrow-forward" size={30} color="black" />
         </TouchableOpacity>
@@ -107,10 +104,23 @@ const App = () => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 20 },
-  header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 18 },
-  dayColumn: { marginHorizontal: 10 },
+  container: {
+    flex: 1,
+    padding: 20,
+    alignItems: 'center', // Centrer horizontalement
+    justifyContent: 'center', // Centrer verticalement
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20, // Ajouté un espace en bas pour séparer du calendrier
+    width: '100%', // S'assurer que le header prend toute la largeur disponible
+  },
+  dayColumn: {
+    marginHorizontal: 10,
+    alignItems: 'center', // Centrer horizontalement le jour et la date
+  },
   dayContainer: {
     backgroundColor: '#f0f0f0',
     borderRadius: 5,
@@ -118,12 +128,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 10,
   },
-  day: { fontWeight: 'bold', fontSize: 16 },
-  date: { fontSize: 14 },
-  slot: { backgroundColor: 'black', padding: 10, marginVertical: 5 },
-  slotText: { color: 'white' },
-  arrow: { padding: 10 },
-  disabledArrow: { padding: 10, opacity: 0.5 },
+  day: {
+    fontWeight: 'bold',
+    fontSize: 16,
+  },
+  date: {
+    fontSize: 14,
+  },
+  slot: {
+    backgroundColor: 'black',
+    padding: 10,
+    marginVertical: 5,
+  },
+  slotText: {
+    color: 'white',
+  },
+  arrow: {
+    padding: 10,
+  },
+  disabledArrow: {
+    padding: 10,
+    opacity: 0.5,
+  },
 });
 
 export default App;
