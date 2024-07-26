@@ -62,6 +62,7 @@ const App = () => {
     </TouchableOpacity>
   );
 
+  // Obtenir les dates de la semaine actuelle
   const days = Array.from({ length: 7 }, (_, i) => currentDay.add(i, 'day'));
 
   const today = dayjs().startOf('day');
@@ -89,9 +90,10 @@ const App = () => {
                 <Text style={styles.date}>{item.format('DD MMM YYYY')}</Text>
               </View>
               <FlatList
-                data={Array.isArray(slots) ? slots.filter(slot => dayjs(slot.start).isSame(item, 'day')) : []}
+                data={slots.filter(slot => dayjs(slot.start).isSame(item, 'day')).sort((a, b) => dayjs(a.start).isBefore(dayjs(b.start)) ? -1 : 1)}
                 renderItem={renderSlot}
                 keyExtractor={(item, index) => index.toString()}
+                contentContainerStyle={styles.slotsList}
               />
             </View>
           )}
@@ -122,7 +124,7 @@ const styles = StyleSheet.create({
     alignItems: 'center', // Centrer horizontalement le jour et la date
   },
   dayContainer: {
-    backgroundColor: '#f0f0f0',
+    backgroundColor: '#e0e0e0', // Gris clair pour le cadre jour/date
     borderRadius: 5,
     padding: 10,
     alignItems: 'center',
@@ -136,12 +138,13 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   slot: {
-    backgroundColor: 'black',
+    backgroundColor: '#f0f0f0', // Gris encore plus clair pour les slots
     padding: 10,
     marginVertical: 5,
+    borderRadius: 5, // Ajout d'arrondi pour les coins
   },
   slotText: {
-    color: 'white',
+    color: 'black',
   },
   arrow: {
     padding: 10,
@@ -149,6 +152,9 @@ const styles = StyleSheet.create({
   disabledArrow: {
     padding: 10,
     opacity: 0.5,
+  },
+  slotsList: {
+    width: 120,
   },
 });
 
