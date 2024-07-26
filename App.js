@@ -59,32 +59,31 @@ const App = () => {
   const getDaySlots = (day) => {
     const daySlots = slots.filter(slot => dayjs(slot.start).isSame(day, 'day'));
 
-    // Créer une liste de tous les créneaux horaires de 8:30 à 17:00 avec des espaces
+    // Create a list of all slots from 8:30 to 17:00 with gaps
     const allSlots = [];
     let currentTime = day.startOf('day').hour(8).minute(30);
     const endTime = day.startOf('day').hour(17).minute(0);
 
-    while (currentTime.isBefore(endTime)) {
-      const nextTime = currentTime.add(30, 'minute');
+    // Add slots with a fixed number to display
+    const numberOfSlotsToShow = 10; // Limiter le nombre de créneaux affichés
+    let slotCount = 0;
+
+    while (currentTime.isBefore(endTime) && slotCount < numberOfSlotsToShow) {
       allSlots.push({
         start: currentTime,
-        end: nextTime,
-        available: daySlots.some(slot => dayjs(slot.start).isSame(currentTime) && dayjs(slot.end).isSame(nextTime)),
+        available: !daySlots.some(slot => dayjs(slot.start).isSame(currentTime)),
       });
-      currentTime = nextTime;
+      currentTime = currentTime.add(30, 'minute'); // move to next slot
+      slotCount++;
     }
 
-    // Limiter le nombre de créneaux horaires vides affichés
-    const availableSlots = allSlots.filter(slot => slot.available);
-    const emptySlots = allSlots.filter(slot => !slot.available).slice(0, Math.max(availableSlots.length / 2, 1));
-
-    return [...availableSlots, ...emptySlots];
+    return allSlots;
   };
 
   const renderSlot = ({ item }) => (
-    <TouchableOpacity style={[styles.slot, !item.available && styles.emptySlot]}>
+    <TouchableOpacity style={item.available ? styles.slot : styles.slotEmpty}>
       <Text style={styles.slotText}>
-        {item.available ? `${dayjs(item.start).format('HH:mm')} - ${dayjs(item.end).format('HH:mm')}` : '-'}
+        {item.available ? `${dayjs(item.start).format('HH:mm')}` : '-'}
       </Text>
     </TouchableOpacity>
   );
@@ -174,8 +173,11 @@ const styles = StyleSheet.create({
     marginVertical: 5,
     width: '100%', // Assurer que les slots prennent toute la largeur disponible
   },
-  emptySlot: {
-    backgroundColor: '#ffffff', // Arrière-plan blanc pour les créneaux horaires vides
+  slotEmpty: {
+    backgroundColor: 'white', // Couleur de fond blanche pour les slots vides
+    padding: 10,
+    marginVertical: 5,
+    width: '100%', // Assurer que les slots prennent toute la largeur disponible
   },
   slotText: {
     color: 'black',
